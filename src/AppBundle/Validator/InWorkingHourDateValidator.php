@@ -21,7 +21,7 @@ class InWorkingHourDateValidator
      * @throws NotInWorkingHourException
      * @throws NotOnWorkingDayException
      */
-    public function validate(\DateTimeInterface $date): void
+    public function validate(\DateTime $date): void
     {
         $this->validateWorkingDay($date);
 
@@ -29,7 +29,6 @@ class InWorkingHourDateValidator
     }
 
     /**
-     * @param \DateTimeInterface $date
      * @throws NotOnWorkingDayException
      */
     private function validateWorkingDay(\DateTime $date): void
@@ -40,7 +39,6 @@ class InWorkingHourDateValidator
     }
 
     /**
-     * @param \DateTimeInterface $date
      * @throws NotInWorkingHourException
      */
     private function validateWorkingHour(\DateTime $date): void

@@ -19,18 +19,12 @@ class DueDateCalculator
     private $inWorkingHourValidator;
 
     /**
-     * @var WorkingRangeHelper
-     */
-    private $workingRangeCalculator;
-
-    /**
      * In a real project I do it through DI
      */
     public function __construct()
     {
         $validator = new InWorkingHourDateValidator();
         $this->inWorkingHourValidator = $validator;
-        $this->workingRangeCalculator = new WorkingRangeHelper($validator);
     }
 
     /**
@@ -51,9 +45,9 @@ class DueDateCalculator
 
         do{
             $endOfDay = WorkingRangeHelper::getDateLastWorkingHour($dueDate);
-            $diffinSecondsToEndOfDay = $this->getDiffInSecondsToEndOfDay($dueDate,$endOfDay);
-            $this->addingToEndOfDay($dueDate,$diffinSecondsToEndOfDay,$turnaroundTimeInSeconds);
-            $turnaroundTimeInSeconds = $this->subtractDiffInSeconds( $turnaroundTimeInSeconds,$diffinSecondsToEndOfDay);
+            $diffInSecondsToEndOfDay = $this->getDiffInSecondsToEndOfDay($dueDate,$endOfDay);
+            $this->addingToEndOfDay($dueDate,$diffInSecondsToEndOfDay,$turnaroundTimeInSeconds);
+            $turnaroundTimeInSeconds = $this->subtractDiffInSeconds( $turnaroundTimeInSeconds,$diffInSecondsToEndOfDay);
             if(0 !== $turnaroundTimeInSeconds){
                 $this->startNewWorkingDay($dueDate);
             }

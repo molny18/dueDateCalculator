@@ -5,19 +5,20 @@ declare(strict_types=1);
 namespace AppBundle\Test;
 
 use AppBundle\Calculator\DueDateCalculator;
+use AppBundle\Exception\AbstractNotInWorkingRangeException;
 use AppBundle\Exception\NotInWorkingHourException;
 use AppBundle\Exception\NotOnWorkingDayException;
 use PHPUnit\Framework\TestCase;
 
 class DueDateCalculatorTest extends TestCase
 {
-
     /**
      * @dataProvider positiveProvider
      *
      * @param \DateTime $submitDate
      * @param int $turnaroundHours
      * @param \DateTime $expectedDueDate
+     * @throws AbstractNotInWorkingRangeException
      */
     public function testCalculateDueDate(\DateTime $submitDate, int $turnaroundHours, \DateTime $expectedDueDate): void
     {
@@ -42,6 +43,7 @@ class DueDateCalculatorTest extends TestCase
      * @param \DateTime $submitDate
      * @param int $turnaroundHours
      * @param string $expectedExceptionClassName
+     * @throws AbstractNotInWorkingRangeException
      */
     public function testNegativeCalculateDueDate(\DateTime $submitDate, int $turnaroundHours, string $expectedExceptionClassName): void
     {
