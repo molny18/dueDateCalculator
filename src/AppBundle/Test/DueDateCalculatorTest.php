@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace AppBundle\Test;
 
 use AppBundle\Calculator\DueDateCalculator;
-use AppBundle\Exception\AbstractNotInWorkingRangeException;
+use AppBundle\Exception\AbstractNotInWorkingRangeInterface;
 use AppBundle\Exception\NotInWorkingHourException;
 use AppBundle\Exception\NotOnWorkingDayException;
+use AppBundle\Validator\InWorkingHourDateValidator;
 use PHPUnit\Framework\TestCase;
 
 class DueDateCalculatorTest extends TestCase
@@ -18,7 +19,7 @@ class DueDateCalculatorTest extends TestCase
      * @param \DateTime $submitDate
      * @param int $turnaroundHours
      * @param \DateTime $expectedDueDate
-     * @throws AbstractNotInWorkingRangeException
+     * @throws AbstractNotInWorkingRangeInterface
      */
     public function testCalculateDueDate(\DateTime $submitDate, int $turnaroundHours, \DateTime $expectedDueDate): void
     {
@@ -30,10 +31,10 @@ class DueDateCalculatorTest extends TestCase
     public function positiveProvider(): array
     {
         return [
-            'finishOnSameDay' => [new \DateTime('2020-08-03 09:15:30'),5,new \DateTime('2020-08-03 14:15:30')],
-            'finishOnNextDay' => [new \DateTime('2020-08-03 09:15:30'),9,new \DateTime('2020-08-04 10:15:30')],
-            'finishOnWeekend' => [new \DateTime('2020-08-06 14:15:30'),13,new \DateTime('2020-08-10 11:15:30')],
-            'finishOnNextWeek' => [new \DateTime('2020-08-07 14:15:30'),24,new \DateTime('2020-08-12 14:15:30')]
+            'finishOnSameDay' => [new \DateTime('2020-08-03 09:15:30'), 5, new \DateTime('2020-08-03 14:15:30')],
+            'finishOnNextDay' => [new \DateTime('2020-08-03 09:15:30'), 9, new \DateTime('2020-08-04 10:15:30')],
+            'finishOnWeekend' => [new \DateTime('2020-08-06 14:15:30'), 13, new \DateTime('2020-08-10 11:15:30')],
+            'finishOnNextWeek' => [new \DateTime('2020-08-07 14:15:30'), 24, new \DateTime('2020-08-12 14:15:30')]
         ];
     }
 
@@ -43,7 +44,7 @@ class DueDateCalculatorTest extends TestCase
      * @param \DateTime $submitDate
      * @param int $turnaroundHours
      * @param string $expectedExceptionClassName
-     * @throws AbstractNotInWorkingRangeException
+     * @throws AbstractNotInWorkingRangeInterface
      */
     public function testNegativeCalculateDueDate(\DateTime $submitDate, int $turnaroundHours, string $expectedExceptionClassName): void
     {
@@ -62,7 +63,8 @@ class DueDateCalculatorTest extends TestCase
 
     private function getCalulator(): DueDateCalculator
     {
-        return new DueDateCalculator();
+        /** in a real project i do this through DI */
+        return new DueDateCalculator(new InWorkingHourDateValidator());
     }
 
 }

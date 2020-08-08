@@ -33,8 +33,8 @@ class InWorkingHourDateValidator
      */
     private function validateWorkingDay(\DateTime $date): void
     {
-        if(in_array($date->format('D'),NotWorkingDaysEnum::getNotWorkingDays(),true)){
-            throw new NotOnWorkingDayException(sprintf('The given date %s is not a working day',$date->format('Y-m-d D')));
+        if (in_array($date->format('D'), NotWorkingDaysEnum::getNotWorkingDays(), true)) {
+            throw new NotOnWorkingDayException(sprintf('The given date %s is not a working day', $date->format('Y-m-d D')));
         }
     }
 
@@ -44,13 +44,13 @@ class InWorkingHourDateValidator
     private function validateWorkingHour(\DateTime $date): void
     {
         $firstWorkingHourTimeStamp = WorkingRangeHelper::getDateFirstWorkingHour($date)->getTimestamp();
-        $lastWorkingHourTimeStamp =  WorkingRangeHelper::getDateLastWorkingHour($date)->getTimestamp();
+        $lastWorkingHourTimeStamp = WorkingRangeHelper::getDateLastWorkingHour($date)->getTimestamp();
         $givenDateTimeStamp = $date->getTimestamp();
 
-        if(
+        if (
             $firstWorkingHourTimeStamp > $givenDateTimeStamp ||
             $lastWorkingHourTimeStamp < $givenDateTimeStamp
-        ){
+        ) {
             throw new NotInWorkingHourException(sprintf('The given date %s is not in the working hour range', $date->format('Y-m-d H:i:s')));
         }
     }

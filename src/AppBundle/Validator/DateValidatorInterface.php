@@ -4,14 +4,14 @@ declare(strict_types=1);
 namespace AppBundle\Validator;
 
 
-use AppBundle\Exception\AbstractNotInWorkingRangeException;
+use AppBundle\Exception\AbstractNotInWorkingRangeInterface;
 
 interface DateValidatorInterface
 {
     /**
      * @param \DateTimeInterface $date
      *
-     * @throws AbstractNotInWorkingRangeException
+     * @throws AbstractNotInWorkingRangeInterface
      */
     public function validate(\DateTimeInterface $date): void;
 }
