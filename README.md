@@ -1,3 +1,3 @@
 # dueDateCalculator
 
-To install please run ```bash composer install``` 
+To install please run ```composer install``` 
