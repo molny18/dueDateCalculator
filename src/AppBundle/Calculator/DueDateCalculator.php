@@ -6,8 +6,9 @@ namespace AppBundle\Calculator;
 
 use AppBundle\Enum\NotWorkingDaysEnum;
 use AppBundle\Enum\WorkingHoursEnum;
-use AppBundle\Exception\NotInWorkingHourException;
+use AppBundle\Exception\AbstractNotInWorkingRangeException;
 use AppBundle\Exception\NotOnWorkingDayException;
+use AppBundle\Helper\WorkingRangeHelper;
 use AppBundle\Validator\InWorkingHourDateValidator;
 
 class DueDateCalculator
@@ -18,52 +19,100 @@ class DueDateCalculator
     private $inWorkingHourValidator;
 
     /**
+     * @var WorkingRangeHelper
+     */
+    private $workingRangeCalculator;
+
+    /**
      * In a real project I do it through DI
      */
     public function __construct()
     {
-        $this->inWorkingHourValidator = new InWorkingHourDateValidator();
+        $validator = new InWorkingHourDateValidator();
+        $this->inWorkingHourValidator = $validator;
+        $this->workingRangeCalculator = new WorkingRangeHelper($validator);
     }
 
+    /**
+     * @throws AbstractNotInWorkingRangeException
+     */
     public function calculateDueDate(\DateTime $submitDate, int $turnaroundHours): \DateTime
     {
         //Validate the submit date is in working hour
         $this->inWorkingHourValidator->validate($submitDate);
 
-        [$days, $hours] = $this->splitForDaysAndHours($turnaroundHours);
+        return $this->addTurnaroundTimeInRealDays($submitDate,$turnaroundHours);
+    }
 
-        $dueDate = $this->addDaysAndHours($submitDate, $days, $hours);
-        try {
-            $this->inWorkingHourValidator->validate($dueDate);
-        } catch (NotOnWorkingDayException $ex) {
-            $this->skipWeekend($dueDate);
-        }
+    public function addTurnaroundTimeInRealDays(\DateTime $submitDate, int $turnaroundHours): \DateTime
+    {
+        $dueDate = clone $submitDate;
+        $turnaroundTimeInSeconds = 3600 * $turnaroundHours;
+
+        do{
+            $endOfDay = WorkingRangeHelper::getDateLastWorkingHour($dueDate);
+            $diffinSecondsToEndOfDay = $this->getDiffInSecondsToEndOfDay($dueDate,$endOfDay);
+            $this->addingToEndOfDay($dueDate,$diffinSecondsToEndOfDay,$turnaroundTimeInSeconds);
+            $turnaroundTimeInSeconds = $this->subtractDiffInSeconds( $turnaroundTimeInSeconds,$diffinSecondsToEndOfDay);
+            if(0 !== $turnaroundTimeInSeconds){
+                $this->startNewWorkingDay($dueDate);
+            }
+        }while(0 < $turnaroundTimeInSeconds);
+
         return $dueDate;
     }
 
-    private function splitForDaysAndHours(int $turnaroundHours): array
+    private function startNewWorkingDay(\DateTime $date): void
     {
-        $days = (int)floor($turnaroundHours / 8);
-        $hours = $turnaroundHours % 8;
-
-        return [$days, $hours];
-    }
-
-    private function addDaysAndHours(\DateTime $submitDate, int $days, int $hours): \DateTime
-    {
-        if (0 === $days) {
-            //clone because of date added by reference, and dont hurt the input data
-            return (clone $submitDate)->add(new \DateInterval(sprintf('PT%dH', $hours)));
+        $date->add(
+            new \DateInterval('P1D')
+        );
+        $date->setTime(WorkingHoursEnum::FIRST_WORKING_HOUR,0,0,0);
+        try{
+            $this->inWorkingHourValidator->validate($date);
+        }catch (NotOnWorkingDayException $ex){
+            $this->skipWeekend($date);
         }
-//        \var_dump($submitDate);die;
-        return (clone $submitDate)->modify(sprintf('P%dDT%dH', $days, $hours));
     }
 
     private function skipWeekend(\DateTime $dueDate): void
     {
         do {
-            $dueDate->modify('P1D');
+            $dueDate->add(
+                new \DateInterval('P1D')
+            );
         } while (in_array($dueDate->format('D'), NotWorkingDaysEnum::getNotWorkingDays(), true));
+
+    }
+
+    private function getDiffInSecondsToEndOfDay(\DateTime $submitDate, \DateTime $endOfDay): int
+    {
+        $difference = $submitDate->diff($endOfDay);
+        $differenceHours = $difference->h;
+        $differenceMins = $difference->i;
+        $differenceSeconds = $difference->s;
+
+        //converting To Secs
+        $differenceSeconds += ($differenceMins * 60) + ($differenceHours * 3600);
+
+        return $differenceSeconds;
+    }
+
+    private function subtractDiffInSeconds( int $turnaroundTimeInSeconds , int $diffinSecondsToEndOfDay): int
+    {
+        if($diffinSecondsToEndOfDay > $turnaroundTimeInSeconds){
+            return 0;
+        }
+        return $turnaroundTimeInSeconds - $diffinSecondsToEndOfDay;
+    }
+
+    private function addingToEndOfDay(\DateTime $dueDate, int $diffinSecondsToEndOfDay, int $turnaroundTimeInSeconds): void
+    {
+        if($diffinSecondsToEndOfDay < $turnaroundTimeInSeconds){
+            $dueDate->modify(sprintf('+ %d second',$diffinSecondsToEndOfDay));
+        }else{
+            $dueDate->modify(sprintf('+ %d second',$turnaroundTimeInSeconds));
+        }
 
     }
 
